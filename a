@@ -1,4 +1,6 @@
 idf.py --list-targets
+rm *.log
 idf.py set-target esp32 | tee set-target-esp32.log
-idf.py set-target esp32p4  | tee set-target.esp32p4.log
+#idf.py set-target esp32p4  | tee set-target-esp32p4.log
+idf.py set-target esp32h2  | tee set-target-esp32h2.log
 
