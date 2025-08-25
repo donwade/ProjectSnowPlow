@@ -281,16 +281,14 @@ void loop()
 	static bool val;
 
 	uint32_t diff = millis() - ticker;
-	if (diff > 500)
+	if (diff > 250)
 	{
 		digitalWrite(LED_BUILTIN,val);
 		val = !val;
 		ticker = millis();
+		printf("Restart counter = %d\n", saved_counter);
 	}
 	
 	ArduinoOTA.handle();
 
-	printf("Restart counter = %d\n", saved_counter);
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
-	
 }
