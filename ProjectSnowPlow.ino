@@ -1,24 +1,21 @@
 
 #include "Arduino.h"
+#define LED_BUILTIN 2
 
-#if 0
-#include "soc/soc.h"
-#include "soc/rtc_cntl_reg.h"
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <NetworkUdp.h>
+#include <ArduinoOTA.h>
+//#include "esp_brownout_detector.h" // Include the brownout detector header
 
-void setup()
-{
-    uint32_t brown_reg_temp = READ_PERI_REG(RTC_CNTL_BROWN_OUT_REG); //save WatchDog register
-    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
-//    WiFi.mode(WIFI_MODE_STA); // turn on WiFi
-    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, brown_reg_temp); //enable brownout detector
-}
-
-void loop()
-{
-    delay(-1);
-}
-
+#ifndef MY_SSID
+const char *ssid = "wifi";
+const char *password =   "";
+#error WTF
 #else
+const char *ssid = MY_SSID;
+const char *password = MY_SSID_PASSWORD;
+#endif
 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -154,6 +151,7 @@ void brownout_init()
 
     REG_SET_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_BROWN_OUT_INT_ENA_M);
 }
+uint32_t saved_counter;
 
 
 //void app_main()
@@ -193,11 +191,13 @@ void setup()
         // Read
         printf("Reading restart counter from NVS ... ");
         err = nvs_get_i32(my_handle, "saved_counter", &saved_counter);
-        switch (err) {
+        switch (err) 
+		{
             case ESP_OK:
                 printf("Done\n");
                 printf("Restart counter = %d\n", saved_counter);
                 break;
+				
             case ESP_ERR_NVS_NOT_FOUND:
                 printf("The value is not initialized yet!\n");
                 break;
@@ -209,16 +209,88 @@ void setup()
         nvs_close(my_handle);
     }
 
-    printf("\n");
+  printf("\n");
 
-    while (1) {
-        printf("Restart counter = %d\n", saved_counter);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+// Port defaults to 3232
+   ArduinoOTA.setPort(3232);
+
+  // Hostname defaults to esp3232-[MAC]
+   ArduinoOTA.setHostname("rover32");
+
+  // No authentication by default
+  // ArduinoOTA.setPassword("admin");
+
+  // Password can be set with it's md5 value as well
+  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH) {
+        type = "sketch";
+      } else {  // U_SPIFFS
+        type = "filesystem";
+      }
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) {
+        Serial.println("Auth Failed");
+      } else if (error == OTA_BEGIN_ERROR) {
+        Serial.println("Begin Failed");
+      } else if (error == OTA_CONNECT_ERROR) {
+        Serial.println("Connect Failed");
+      } else if (error == OTA_RECEIVE_ERROR) {
+        Serial.println("Receive Failed");
+      } else if (error == OTA_END_ERROR) {
+        Serial.println("End Failed");
+      }
+    });
+
+  ArduinoOTA.begin();
+
+  Serial.println("Ready");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  pinMode(LED_BUILTIN, OUTPUT);
+
 }
 
-void loop()
+void loop() 
 {
-    delay(-1);
+	static uint32_t ticker;
+	static bool val;
+
+	uint32_t diff = millis() - ticker;
+	if (diff > 500)
+	{
+		digitalWrite(LED_BUILTIN,val);
+		val = !val;
+		ticker = millis();
+	}
+	
+	ArduinoOTA.handle();
+
+	printf("Restart counter = %d\n", saved_counter);
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+	
 }
-#endif
