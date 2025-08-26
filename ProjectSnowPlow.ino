@@ -172,7 +172,9 @@ void setup()
 
     int32_t saved_counter = 0; // value will default to 0, if not set yet in NVS
     esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) 
+	{
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -183,16 +185,22 @@ void setup()
     // Open
     printf("\n");
     printf("Opening Non-Volatile Storage (NVS) handle... ");
+
     nvs_handle my_handle;
     err = nvs_open("storage", NVS_READWRITE, &my_handle);
-    if (err != ESP_OK) {
+	
+    if (err != ESP_OK) 
+	{
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-    } else {
+    }
+	else 
+    {
         printf("Done\n");
 
         // Read
         printf("Reading restart counter from NVS ... ");
         err = nvs_get_i32(my_handle, "saved_counter", &saved_counter);
+		
         switch (err) 
 		{
             case ESP_OK:
@@ -203,6 +211,7 @@ void setup()
             case ESP_ERR_NVS_NOT_FOUND:
                 printf("The value is not initialized yet!\n");
                 break;
+
             default :
                 printf("Error (%s) reading!\n", esp_err_to_name(err));
         }
@@ -216,66 +225,68 @@ void setup()
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) 
+  {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
     ESP.restart();
   }
-// Port defaults to 3232
-   ArduinoOTA.setPort(3232);
+  
+	// Port defaults to 3232
+	ArduinoOTA.setPort(3232);
 
-  // Hostname defaults to esp3232-[MAC]
-   ArduinoOTA.setHostname("rover32");
+	// Hostname defaults to esp3232-[MAC]
+	ArduinoOTA.setHostname("rover32");
 
-  // No authentication by default
-  // ArduinoOTA.setPassword("admin");
+	// No authentication by default
+	// ArduinoOTA.setPassword("admin");
 
-  // Password can be set with it's md5 value as well
-  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+	// Password can be set with it's md5 value as well
+	// MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+	// ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
 
-  ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH) {
-        type = "sketch";
-      } else {  // U_SPIFFS
-        type = "filesystem";
-      }
+	ArduinoOTA
+	.onStart([]() {
+	  String type;
+	  if (ArduinoOTA.getCommand() == U_FLASH) {
+	    type = "sketch";
+	  } else {  // U_SPIFFS
+	    type = "filesystem";
+	  }
 
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) {
-        Serial.println("Auth Failed");
-      } else if (error == OTA_BEGIN_ERROR) {
-        Serial.println("Begin Failed");
-      } else if (error == OTA_CONNECT_ERROR) {
-        Serial.println("Connect Failed");
-      } else if (error == OTA_RECEIVE_ERROR) {
-        Serial.println("Receive Failed");
-      } else if (error == OTA_END_ERROR) {
-        Serial.println("End Failed");
-      }
-    });
+	  // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+	  Serial.println("Start updating " + type);
+	})
+	.onEnd([]() {
+	  Serial.println("\nEnd");
+	})
+	.onProgress([](unsigned int progress, unsigned int total) {
+	  Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+	})
+	.onError([](ota_error_t error) {
+	  Serial.printf("Error[%u]: ", error);
+	  if (error == OTA_AUTH_ERROR) {
+	    Serial.println("Auth Failed");
+	  } else if (error == OTA_BEGIN_ERROR) {
+	    Serial.println("Begin Failed");
+	  } else if (error == OTA_CONNECT_ERROR) {
+	    Serial.println("Connect Failed");
+	  } else if (error == OTA_RECEIVE_ERROR) {
+	    Serial.println("Receive Failed");
+	  } else if (error == OTA_END_ERROR) {
+	    Serial.println("End Failed");
+	  }
+	});
 
-  ArduinoOTA.begin();
+	ArduinoOTA.begin();
 
-  web_setup();
+	web_setup();
 
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+	Serial.println("Ready");
+	Serial.print("IP address: ");
+	Serial.println(WiFi.localIP());
 
-  pinMode(LED_BUILTIN, OUTPUT);
+	pinMode(LED_BUILTIN, OUTPUT);
 
 }
 
@@ -294,6 +305,7 @@ void loop()
 	}
 
     web_loop();
+	
 	ArduinoOTA.handle();
 
 }
