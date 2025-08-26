@@ -153,6 +153,8 @@ void brownout_init()
 }
 uint32_t saved_counter;
 
+extern void web_setup(void);
+extern void web_loop(void);
 
 //void app_main()
 void setup()
@@ -267,6 +269,8 @@ void setup()
 
   ArduinoOTA.begin();
 
+  web_setup();
+
   Serial.println("Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
@@ -288,7 +292,8 @@ void loop()
 		ticker = millis();
 		printf("Restart counter = %d\n", saved_counter);
 	}
-	
+
+    web_loop();
 	ArduinoOTA.handle();
 
 }
